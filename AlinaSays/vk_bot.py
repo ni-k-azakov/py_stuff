@@ -1,24 +1,21 @@
 from bs4 import BeautifulSoup
 import requests
-import vk_api
-from vk_api.longpoll import VkLongPoll, VkEventType
 
 
 class VkBot:
-    # def __init__(self, user_id):
     def __init__(self):
         print("Alina was born")
-        # self._user_id = user_id
-        # self._username = self._get_user_name(user_id)
-        self._commands = ["Алина говорит..."]
+        self._commands = ["алина говорит..."]
 
-    def _get_user_name(self, user_id):
+    @staticmethod
+    def _get_user_name(user_id):
         request = requests.get("https://vk.com/id" + str(user_id))
         parsed_text = BeautifulSoup(request.text, 'lxml')
-        user_name = self._clean_str(parsed_text.find_all("title")[0])
+        user_name = parsed_text.find_all("title")[0].text
         return user_name.split()[0]
 
-    def _get_time(self):
+    @staticmethod
+    def _get_time():
         request = requests.get("https://my-calend.ru/date-and-time-today")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         time = parsed_text.select(".page")[0].findAll("h2")[1].text.split()[1]
@@ -26,13 +23,14 @@ class VkBot:
         time = time[:-1]
         return time[:-1]
 
-    def _get_day(self):
+    @staticmethod
+    def _get_day():
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
         return day
 
-    def _get_temp_teacher(self):
+    def _get_info(self):
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         parsed_text = BeautifulSoup(request.text, 'html5lib')
         if parsed_text.find("strong").text == 'нечетная':
@@ -63,8 +61,13 @@ class VkBot:
                         lesson = tag.select_one(".lesson").find("dd").text
                         teacher = tag.select_one(".lesson").find("b").text.replace('\n', "").replace(" ", "")
                         if teacher == "":
-                            return "Надо выпить с таинственным незнакомцем"
+                            return "Выпиваем с таинственным незнакомцем"
                         return lesson
             if more_lessons:
                 return "Попиваем пивко в ожидании пары (" + temp_lesson + ")"
-        return "Сегодня отдыхаем, пивко попиваем, с бюджета слетаем"
+        return "Сегодня отдыхаем. Пивко попиваем. С бюджета слетаем"
+
+    def new_message(self, message):
+        if message.lower() == self._commands[0]:
+            return self._get_info()
+        return "no"

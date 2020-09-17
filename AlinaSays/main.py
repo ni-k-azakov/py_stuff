@@ -1,6 +1,24 @@
+import random
 import vk_api
-import vk_bot
-from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-bot = vk_bot.VkBot()
-print(bot._get_temp_teacher())
+from vk_bot import VkBot
+import requests
+
+token = "e6082b87a5ca9afe1590078622439c06a62a0e72da39c025dc8fe33b18a764e7668a71d30ba89a484431d"
+vk_session = vk_api.VkApi(token=token)
+
+print("Server started")
+while True:
+    longpoll = VkBotLongPoll(vk_session, 198784996)
+    vk = vk_session.get_api()
+    bot = VkBot()
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                if bot.new_message(event.object.message['text']) != "no":
+                    vk.messages.send(peer_id=event.object.message['peer_id'],
+                                     message=bot.new_message(event.object.message['text']),
+                                     random_id=random.randint(0, 2048))
+    except requests.exceptions.ReadTimeout as timeout:
+        continue
