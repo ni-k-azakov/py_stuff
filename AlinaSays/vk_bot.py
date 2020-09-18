@@ -1,39 +1,49 @@
 from bs4 import BeautifulSoup
 import requests
+from datetime import datetime
+import pytz
 
 
 class VkBot:
     def __init__(self):
         print("Alina was born")
-        self._commands = ["алина говорит..."]
-
-    @staticmethod
-    def _get_user_name(user_id):
-        request = requests.get("https://vk.com/id" + str(user_id))
+        self._commands = ["алина говорит", "!алина", "!алина завтра", "!алина сегодня"]
+        request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
+        self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
+        request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
-        user_name = parsed_text.find_all("title")[0].text
-        return user_name.split()[0]
+        day = parsed_text.find("p", id="day").text
+        self._prev_day = day
 
     @staticmethod
     def _get_time():
-        request = requests.get("https://my-calend.ru/date-and-time-today")
-        parsed_text = BeautifulSoup(request.text, 'lxml')
-        time = parsed_text.select(".page")[0].findAll("h2")[1].text.split()[1]
+        tz = pytz.timezone('Europe/Moscow')
+        time = datetime.now(tz=tz).strftime('%H:%M:%S')
         time = time[:-1]
         time = time[:-1]
         return time[:-1]
 
-    @staticmethod
-    def _get_day():
+    def _get_day(self):
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
+        switch = {
+            'Понедельник': 0,
+            'Вторник': 1,
+            'Среда': 2,
+            'Четверг': 3,
+            'Пятница': 4,
+            'Суббота': 5,
+            'Воскресенье': 6,
+        }
+        if switch.get(self._prev_day) > switch.get(day):
+            self._prev_day = day
+            request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
+            self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         return day
 
     def _get_info(self):
-        request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
-        parsed_text = BeautifulSoup(request.text, 'html5lib')
-        if parsed_text.find("strong").text == 'нечетная':
+        if self._itmo_schedule.find("strong").text == 'нечетная':
             request = requests.get('https://itmo.ru/ru/schedule/0/M3206/2/raspisanie_zanyatiy_M3206.htm')
         else:
             request = requests.get('https://itmo.ru/ru/schedule/0/M3206/1/raspisanie_zanyatiy_M3206.htm')
@@ -49,25 +59,91 @@ class VkBot:
         }
         more_lessons = False
         temp_lesson = ""
-        if parsed_text.find("table", id=switch.get(self._get_day())) is not None:
-            temp_day = parsed_text.find("table", id=switch.get(self._get_day()))
+        temp_day = parsed_text.find("table", id=switch.get(self._get_day()))
+        if temp_day is not None:
             for tag in temp_day.find("tbody").find_all("tr"):
-                if tag.select_one(".time") is not None:
-                    time = tag.select_one(".time").find("span").text.split('-')
+                temp_time = tag.select_one(".time")
+                if temp_time is not None:
+                    time = temp_time.find("span").text.split('-')
+                    lesson_block = tag.select_one(".lesson").find("dd").text
                     if time[0] >= self._get_time() and not more_lessons:
                         more_lessons = True
-                        temp_lesson = tag.select_one(".lesson").find("dd").text
+                        temp_lesson = lesson_block
                     if time[0] <= self._get_time() <= time[1]:
-                        lesson = tag.select_one(".lesson").find("dd").text
+                        lesson = lesson_block
                         teacher = tag.select_one(".lesson").find("b").text.replace('\n', "").replace(" ", "")
                         if teacher == "":
-                            return "Выпиваем с таинственным незнакомцем"
-                        return lesson
-            if more_lessons:
-                return "Попиваем пивко в ожидании пары (" + temp_lesson + ")"
-        return "Сегодня отдыхаем. Пивко попиваем. С бюджета слетаем"
+                            return "Выпиваю с незнакомцем, ведущим " + lesson + " (" + time[0] + "-" + time[1] + ")"
+                        output_teacher = ""
+                        for letter in teacher:
+                            if letter.lower() != letter:
+                                output_teacher += ' '
+                            output_teacher += letter
+                        return "Закрепляю пивом " + lesson + " (" + time[0] + "-" + time[1] + ")" + output_teacher
+                if more_lessons:
+                    return "Попиваю пивко в ожидании пары (" + temp_lesson + ")\nНачало в " + time[0]
+        return "Сегодня отдыхаю. Пивко попиваю. Тейлор снимаю"
+
+    def _day_info(self, which_day):
+        switch = {
+            0: '1day',
+            1: '2day',
+            2: '3day',
+            3: '4day',
+            4: '5day',
+            5: '6day',
+            6: '7day',
+        }
+        switch2 = {
+            'Понедельник': 0,
+            'Вторник': 1,
+            'Среда': 2,
+            'Четверг': 3,
+            'Пятница': 4,
+            'Суббота': 5,
+            'Воскресенье': 6,
+        }
+        if switch.get(self._get_day()) != 'Воскресенье':
+            if self._itmo_schedule.find("strong").text == 'нечетная':
+                request = requests.get('https://itmo.ru/ru/schedule/0/M3206/2/raspisanie_zanyatiy_M3206.htm')
+            else:
+                request = requests.get('https://itmo.ru/ru/schedule/0/M3206/1/raspisanie_zanyatiy_M3206.htm')
+        else:
+            if self._itmo_schedule.find("strong").text == 'нечетная':
+                request = requests.get('https://itmo.ru/ru/schedule/0/M3206/1/raspisanie_zanyatiy_M3206.htm')
+            else:
+                request = requests.get('https://itmo.ru/ru/schedule/0/M3206/2/raspisanie_zanyatiy_M3206.htm')
+        parsed_text = BeautifulSoup(request.text, 'html5lib')
+        temp_day = parsed_text.find("table", id=switch.get(switch2.get(self._get_day()) + which_day))
+        table = ""
+        if which_day == 0:
+            table = "Сегодня пью на:\n"
+        if which_day == 1:
+            table = "Завтра буду пить на:\n"
+        if temp_day is not None:
+            for tag in temp_day.find("tbody").find_all("tr"):
+                temp_time = tag.select_one(".time")
+                if temp_time is not None:
+                    time = temp_time.find("span").text.split('-')
+                    lesson_block = tag.select_one(".lesson").find("dd").text
+                    teacher = tag.select_one(".lesson").find("b").text.replace('\n', "").replace(" ", "")
+                    table += lesson_block + " (" + time[0] + "-" + time[1] + ")"
+                    output_teacher = ""
+                    if teacher != "":
+                        for letter in teacher:
+                            if letter.lower() != letter:
+                                output_teacher += ' '
+                            output_teacher += letter
+                    table += output_teacher + '\n----\n'
+            return table
+        return "Сегодня отдыхаю. Пивко попиваю. Тейлор снимаю"
 
     def new_message(self, message):
-        if message.lower() == self._commands[0]:
+        if message.lower() == self._commands[0] or message.lower() == self._commands[1]:
             return self._get_info()
+        if message.lower() == self._commands[2]:
+            return self._day_info(1)
+        if message.lower() == self._commands[3]:
+            return self._day_info(0)
+
         return "no"

@@ -5,7 +5,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_bot import VkBot
 import requests
 
-token = "Здеся Был Токен Но Я Его Убрал"
+
+token = "e6082b87a5ca9afe1590078622439c06a62a0e72da39c025dc8fe33b18a764e7668a71d30ba89a484431d"
 vk_session = vk_api.VkApi(token=token)
 
 print("Server started")
@@ -16,9 +17,10 @@ while True:
     try:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                if bot.new_message(event.object.message['text']) != "no":
+                message = bot.new_message(event.object.message['text'])
+                if message != "no":
                     vk.messages.send(peer_id=event.object.message['peer_id'],
-                                     message=bot.new_message(event.object.message['text']),
+                                     message=message,
                                      random_id=random.randint(0, 2048))
     except requests.exceptions.ReadTimeout as timeout:
         continue
