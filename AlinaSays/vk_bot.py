@@ -2,13 +2,14 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pytz
+from settings import update_list
 
 
 class VkBot:
     def __init__(self):
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
-                          "!обновления", "панимаю", "ЗаХаРеВиЧ"]
+                          "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -24,7 +25,8 @@ class VkBot:
         time = time[:-1]
         return time[:-1]
 
-    def _get_day(self):
+    @staticmethod
+    def _get_day():
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
@@ -67,11 +69,11 @@ class VkBot:
                             if letter.lower() != letter:
                                 output_teacher += ' '
                             output_teacher += letter
-                        return "Закрепляю пивом " + lesson + " (" + time[0] + "-" + time[1] + ")" + output_teacher
+                        return "Закрепляю сидром " + lesson + " (" + time[0] + "-" + time[1] + ")" + output_teacher
                 if more_lessons:
                     time = temp_time.find("span").text.split('-')
-                    return "Попиваю пивко в ожидании пары (" + temp_lesson + ")\nНачало в " + time[0]
-        return "Сейчас отдыхаю. Пивко попиваю. Тейлор снимаю"
+                    return "Попиваю сидр в ожидании пары (" + temp_lesson + ")\nНачало в " + time[0]
+        return "Сейчас отдыхаю. Сидр попиваю. Тейлор снимаю"
 
     def _day_info(self, which_day):
         switch = {
@@ -125,16 +127,22 @@ class VkBot:
                             output_teacher += letter
                     table += output_teacher + '\n----\n'
             return table
-        return "В этот день отдыхаю. Пивко попиваю. Тейлор снимаю"
+        return "В этот день отдыхаю. Сидр попиваю. Тейлор снимаю"
 
-    def _command_info(self):
-        return "Список команд:\n1) !алина - ближайшая пара на сегодня\n2) !алина сегодня - расписание на сегодня\n3) " \
-               "!алина завтра - расписание на завтра\n4) !обновление - новости о последнем обновлении"
+    @staticmethod
+    def _command_info():
+        return "Список команд:\n1) !алина: ближайшая пара на сегодня\n2) !алина сегодня: расписание на сегодня\n3) " \
+               "!алина завтра: расписание на завтра\n4) !обновление: новости о последнем обновлении\n5) !обновление " \
+               "все: список всех последних обновлений "
 
-    def _update(self):
-        return "Update:\n1) Команда `алина говорит` изменена на !алина\n2) Новая команда: !алина сегодня\n3) Новая " \
-               "команда: !алина завтра\n4) Новая команда: !команды"
-
+    @staticmethod
+    def _update():
+        return "Update 2:\n1) Пиво было заменено на сидр\n2) Новая команда: !обновление все"
+    
+    @staticmethod
+    def _update_all():
+        return update_list
+    
     def new_message(self, message):
         switch_time = {
             'Понедельник': 0,
@@ -163,4 +171,6 @@ class VkBot:
             return "Спасибо за понимание"
         if message == self._commands[8]:
             return "зАхАрЕвИч!"
+        if message == self._commands[9]:
+            return self._update_all()
         return "no"
