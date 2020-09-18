@@ -8,7 +8,7 @@ class VkBot:
     def __init__(self):
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
-                          "!обновления"]
+                          "!обновления", "панимаю", "ЗаХаРеВиЧ"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -125,7 +125,7 @@ class VkBot:
                             output_teacher += letter
                     table += output_teacher + '\n----\n'
             return table
-        return "Сегодня отдыхаю. Пивко попиваю. Тейлор снимаю"
+        return "В этот день отдыхаю. Пивко попиваю. Тейлор снимаю"
 
     def _command_info(self):
         return "Список команд:\n1) !алина - ближайшая пара на сегодня\n2) !алина сегодня - расписание на сегодня\n3) " \
@@ -159,6 +159,8 @@ class VkBot:
             return self._command_info()
         if message.lower() == self._commands[4] or message.lower() == self._commands[6]:
             return self._update()
-        if message.lower() == self._commands[5]:
+        if message.lower() == self._commands[5] or message.lower() == self._commands[7]:
             return "Спасибо за понимание"
+        if message == self._commands[8]:
+            return "зАхАрЕвИч!"
         return "no"
