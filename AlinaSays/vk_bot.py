@@ -171,6 +171,6 @@ class VkBot:
             return "Спасибо за понимание"
         if message == self._commands[8]:
             return "зАхАрЕвИч!"
-        if message == self._commands[9]:
+        if message.lower() == self._commands[9]:
             return self._update_all()
         return "no"
