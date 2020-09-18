@@ -7,7 +7,8 @@ import pytz
 class VkBot:
     def __init__(self):
         print("Alina was born")
-        self._commands = ["алина говорит", "!алина", "!алина завтра", "!алина сегодня"]
+        self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
+                          "!обновления"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -27,19 +28,6 @@ class VkBot:
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
-        switch = {
-            'Понедельник': 0,
-            'Вторник': 1,
-            'Среда': 2,
-            'Четверг': 3,
-            'Пятница': 4,
-            'Суббота': 5,
-            'Воскресенье': 6,
-        }
-        if switch.get(self._prev_day) > switch.get(day):
-            self._prev_day = day
-            request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
-            self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         return day
 
     def _get_info(self):
@@ -81,8 +69,9 @@ class VkBot:
                             output_teacher += letter
                         return "Закрепляю пивом " + lesson + " (" + time[0] + "-" + time[1] + ")" + output_teacher
                 if more_lessons:
+                    time = temp_time.find("span").text.split('-')
                     return "Попиваю пивко в ожидании пары (" + temp_lesson + ")\nНачало в " + time[0]
-        return "Сегодня отдыхаю. Пивко попиваю. Тейлор снимаю"
+        return "Сейчас отдыхаю. Пивко попиваю. Тейлор снимаю"
 
     def _day_info(self, which_day):
         switch = {
@@ -118,7 +107,7 @@ class VkBot:
         table = ""
         if which_day == 0:
             table = "Сегодня пью на:\n"
-        if which_day == 1:
+        elif which_day == 1:
             table = "Завтра буду пить на:\n"
         if temp_day is not None:
             for tag in temp_day.find("tbody").find_all("tr"):
@@ -138,12 +127,38 @@ class VkBot:
             return table
         return "Сегодня отдыхаю. Пивко попиваю. Тейлор снимаю"
 
-    def new_message(self, message):
-        if message.lower() == self._commands[0] or message.lower() == self._commands[1]:
-            return self._get_info()
-        if message.lower() == self._commands[2]:
-            return self._day_info(1)
-        if message.lower() == self._commands[3]:
-            return self._day_info(0)
+    def _command_info(self):
+        return "Список команд:\n1) !алина - ближайшая пара на сегодня\n2) !алина сегодня - расписание на сегодня\n3) " \
+               "!алина завтра - расписание на завтра\n4) !обновление - новости о последнем обновлении"
 
+    def _update(self):
+        return "Update:\n1) Команда `алина говорит` изменена на !алина\n2) Новая команда: !алина сегодня\n3) Новая " \
+               "команда: !алина завтра\n4) Новая команда: !команды"
+
+    def new_message(self, message):
+        switch_time = {
+            'Понедельник': 0,
+            'Вторник': 1,
+            'Среда': 2,
+            'Четверг': 3,
+            'Пятница': 4,
+            'Суббота': 5,
+            'Воскресенье': 6,
+        }
+        if switch_time.get(self._prev_day) > switch_time.get(self._get_day()):
+            self._prev_day = self._get_day()
+            request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
+            self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
+        if message.lower() == self._commands[0]:
+            return self._get_info()
+        if message.lower() == self._commands[1]:
+            return self._day_info(1)
+        if message.lower() == self._commands[2]:
+            return self._day_info(0)
+        if message.lower() == self._commands[3]:
+            return self._command_info()
+        if message.lower() == self._commands[4] or message.lower() == self._commands[6]:
+            return self._update()
+        if message.lower() == self._commands[5]:
+            return "Спасибо за понимание"
         return "no"

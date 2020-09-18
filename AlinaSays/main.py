@@ -2,16 +2,17 @@ import random
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
+from settings import vk_group_token, vk_group_id
 from vk_bot import VkBot
 import requests
 
 
-token = "Место для токена"
+token = vk_group_token
 vk_session = vk_api.VkApi(token=token)
 
 print("Server started")
 while True:
-    longpoll = VkBotLongPoll(vk_session, 198784996)
+    longpoll = VkBotLongPoll(vk_session, vk_group_id)
     vk = vk_session.get_api()
     bot = VkBot()
     try:
