@@ -6,7 +6,7 @@ from vk_bot import VkBot
 import requests
 
 
-token = "e6082b87a5ca9afe1590078622439c06a62a0e72da39c025dc8fe33b18a764e7668a71d30ba89a484431d"
+token = "Место для токена"
 vk_session = vk_api.VkApi(token=token)
 
 print("Server started")
