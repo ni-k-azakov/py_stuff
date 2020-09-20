@@ -105,7 +105,7 @@ class VkBot:
             else:
                 request = requests.get('https://itmo.ru/ru/schedule/0/M3206/2/raspisanie_zanyatiy_M3206.htm')
         parsed_text = BeautifulSoup(request.text, 'html5lib')
-        temp_day = parsed_text.find("table", id=switch.get(switch2.get(self._get_day()) + which_day))
+        temp_day = parsed_text.find("table", id=switch.get(switch2.get((self._get_day()) + which_day) % 7))
         table = ""
         if which_day == 0:
             table = "Сегодня пью на:\n"
@@ -137,7 +137,7 @@ class VkBot:
 
     @staticmethod
     def _update():
-        return "Update 2:\n1) Пиво было заменено на сидр\n2) Новая команда: !обновление все"
+        return "Update 3:\n1) Sunday bug fix"
     
     @staticmethod
     def _update_all():
