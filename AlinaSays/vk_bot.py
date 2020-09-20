@@ -2,20 +2,31 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 import pytz
+import collections
+from progress_bar import progress
 from settings import update_list
+
+
+def _get_name(user_id):
+    request = requests.get("https://vk.com/id" + str(user_id))
+    bs = BeautifulSoup(request.text, "lxml")
+    user_name = bs.find("title").text
+    return user_name.split()[0] + " " + user_name.split()[1]
 
 
 class VkBot:
     def __init__(self):
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
-                          "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все"]
+                          "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
         self._prev_day = day
+        self._flood = collections.Counter()
+        self._flood_amount = 0
 
     @staticmethod
     def _get_time():
@@ -133,17 +144,25 @@ class VkBot:
     def _command_info():
         return "Список команд:\n1) !алина: ближайшая пара на сегодня\n2) !алина сегодня: расписание на сегодня\n3) " \
                "!алина завтра: расписание на завтра\n4) !обновление: новости о последнем обновлении\n5) !обновление " \
-               "все: список всех последних обновлений "
+               "все: список всех последних обновлений\n6) !флуд: активность участников беседы"
 
     @staticmethod
     def _update():
-        return "Update 3:\n1) Sunday bug fix"
+        return "Update 4:\n1) Новая команда: !флуд"
     
     @staticmethod
     def _update_all():
         return update_list
-    
-    def new_message(self, message):
+
+    def _participation(self):
+        output = ""
+        for key, value in self._flood.items():
+            output += key + ": " + str(value) + " " + progress(value, self._flood_amount) + '\n'
+        return output
+
+    def new_message(self, message, user_id):
+        self._flood[_get_name(user_id)] += 1
+        self._flood_amount += 1
         switch_time = {
             'Понедельник': 0,
             'Вторник': 1,
@@ -173,4 +192,6 @@ class VkBot:
             return "зАхАрЕвИч!"
         if message.lower() == self._commands[9]:
             return self._update_all()
+        if message.lower() == self._commands[10]:
+            return self._participation()
         return "no"

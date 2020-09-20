@@ -18,7 +18,7 @@ while True:
     try:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
-                message = bot.new_message(event.object.message['text'])
+                message = bot.new_message(event.object.message['text'], event.object.message['from_id'])
                 if message != "no":
                     vk.messages.send(peer_id=event.object.message['peer_id'],
                                      message=message,
