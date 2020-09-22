@@ -5,6 +5,7 @@ import pytz
 import collections
 from progress_bar import progress
 from settings import update_list
+from Chat import Chat
 
 
 def _get_name(user_id):
@@ -25,8 +26,8 @@ class VkBot:
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
         self._prev_day = day
-        self._flood = collections.Counter()
-        self._flood_amount = 0
+        self._flood = {}
+        self._flood_amount = collections.Counter()
 
     @staticmethod
     def _get_time():
@@ -154,15 +155,17 @@ class VkBot:
     def _update_all():
         return update_list
 
-    def _participation(self):
+    def _participation(self, chat_id):
         output = ""
-        for key, value in self._flood.items():
-            output += key + ": " + str(value) + " " + progress(value, self._flood_amount) + '\n'
+        for key, value in self._flood[chat_id].get_all().items():
+            output += key + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
         return output
 
-    def new_message(self, message, user_id):
-        self._flood[_get_name(user_id)] += 1
-        self._flood_amount += 1
+    def new_message(self, message, user_id, chat_id):
+        if self._flood.get(chat_id) is None:
+            self._flood[chat_id] = Chat()
+        self._flood[chat_id].plus(user_id)
+        self._flood_amount[chat_id] += 1
         switch_time = {
             'Понедельник': 0,
             'Вторник': 1,
@@ -193,5 +196,5 @@ class VkBot:
         if message.lower() == self._commands[9]:
             return self._update_all()
         if message.lower() == self._commands[10]:
-            return self._participation()
+            return self._participation(chat_id)
         return "no"

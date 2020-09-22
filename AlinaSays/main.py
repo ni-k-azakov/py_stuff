@@ -11,10 +11,10 @@ token = vk_group_token
 vk_session = vk_api.VkApi(token=token)
 
 print("Server started")
+bot = VkBot()
 while True:
     longpoll = VkBotLongPoll(vk_session, vk_group_id)
     vk = vk_session.get_api()
-    bot = VkBot()
     try:
         for event in longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW:
