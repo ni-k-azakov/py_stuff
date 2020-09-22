@@ -8,7 +8,7 @@ from settings import update_list
 from Chat import Chat
 
 
-def _get_name(user_id):
+def get_name(user_id):
     request = requests.get("https://vk.com/id" + str(user_id))
     bs = BeautifulSoup(request.text, "lxml")
     user_name = bs.find("title").text
@@ -158,7 +158,7 @@ class VkBot:
     def _participation(self, chat_id):
         output = ""
         for key, value in self._flood[chat_id].get_all().items():
-            output += str(key) + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
+            output += get_name(key) + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
         return output
 
     def new_message(self, message, user_id, chat_id):
