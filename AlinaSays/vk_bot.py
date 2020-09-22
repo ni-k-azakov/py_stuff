@@ -158,7 +158,7 @@ class VkBot:
     def _participation(self, chat_id):
         output = ""
         for key, value in self._flood[chat_id].get_all().items():
-            output += key + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
+            output += str(key) + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
         return output
 
     def new_message(self, message, user_id, chat_id):
