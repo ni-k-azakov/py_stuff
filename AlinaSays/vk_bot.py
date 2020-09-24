@@ -19,7 +19,8 @@ class VkBot:
     def __init__(self):
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
-                          "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд"]
+                          "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд", "!сайт",
+                          "!флуд точно"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -145,27 +146,30 @@ class VkBot:
     def _command_info():
         return "Список команд:\n1) !алина: ближайшая пара на сегодня\n2) !алина сегодня: расписание на сегодня\n3) " \
                "!алина завтра: расписание на завтра\n4) !обновление: новости о последнем обновлении\n5) !обновление " \
-               "все: список всех последних обновлений\n6) !флуд: активность участников беседы"
+               "все: список всех последних обновлений\n6) !флуд: активность участников беседы в процентах\n7) !сайт: " \
+               "ссылочка на Машин сайт со всей инфой по парам\n8) !флуд точно: активность участников беседы (" \
+               "количество сообщений + проценты) "
 
     @staticmethod
     def _update():
-        return "Update 4:\n1) Новая команда: !флуд"
+        return "Update 5:\n1) Новая команда: !сайт\n2) У команды !флуд изменен функционал. Теперь показывается" \
+               "только процент флуда (для отображения количества сообщений теперь другая команда - !флуд точно)\n3) " \
+               "Новая команда: !флуд точно\n4) Команды !флуд и !флуд точно больше не учитывают сообщения с командами"
     
     @staticmethod
     def _update_all():
         return update_list
 
-    def _participation(self, chat_id):
+    def _participation(self, chat_id, message):
         output = ""
         for key, value in self._flood[chat_id].get_all().items():
-            output += get_name(key) + ": " + str(value) + " " + progress(value, self._flood_amount[chat_id]) + '\n'
+            output += get_name(key) + ": "
+            if message == self._commands[12]:
+                output += str(value) + '\n'
+            output += progress(value, self._flood_amount[chat_id]) + '\n'
         return output
 
     def new_message(self, message, user_id, chat_id):
-        if self._flood.get(chat_id) is None:
-            self._flood[chat_id] = Chat()
-        self._flood[chat_id].plus(user_id)
-        self._flood_amount[chat_id] += 1
         switch_time = {
             'Понедельник': 0,
             'Вторник': 1,
@@ -195,6 +199,12 @@ class VkBot:
             return "зАхАрЕвИч!"
         if message.lower() == self._commands[9]:
             return self._update_all()
-        if message.lower() == self._commands[10]:
-            return self._participation(chat_id)
+        if message.lower() == self._commands[10] or message.lower() == self._commands[12]:
+            return self._participation(chat_id, message.lower())
+        if message.lower() == self._commands[11]:
+            return "usachova.gitbook.io"
+        if self._flood.get(chat_id) is None:
+            self._flood[chat_id] = Chat()
+        self._flood[chat_id].plus(user_id)
+        self._flood_amount[chat_id] += 1
         return "no"
