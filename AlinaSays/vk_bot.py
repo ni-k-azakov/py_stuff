@@ -196,7 +196,7 @@ class VkBot:
                 self._flood[temp_chat] = Chat()
                 self._flood_amount[temp_chat] = int(line.split()[2])
                 continue
-            temp_user = line.split()[0]
+            temp_user = int(line.split()[0])
             for _ in range(0, int(line.split()[1])):
                 self._flood[temp_chat].plus(temp_user)
         file.close()
