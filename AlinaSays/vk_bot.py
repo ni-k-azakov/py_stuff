@@ -192,7 +192,7 @@ class VkBot:
             if line == '':
                 continue
             if line.split()[0] == 'index:':
-                temp_chat = line.split()[1]
+                temp_chat = int(line.split()[1])
                 self._flood[temp_chat] = Chat()
                 self._flood_amount[temp_chat] = int(line.split()[2])
                 continue
@@ -204,7 +204,7 @@ class VkBot:
         for line in file:
             if line == '':
                 continue
-            self._id_to_name[line.split()[0]] = line.split()[1] + " " + line.split()[2]
+            self._id_to_name[int(line.split()[0])] = line.split()[1] + " " + line.split()[2]
         file.close()
 
     def new_message(self, message, user_id, chat_id):
