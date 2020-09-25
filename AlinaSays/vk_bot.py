@@ -8,19 +8,12 @@ from settings import update_list
 from Chat import Chat
 
 
-def get_name(user_id):
-    request = requests.get("https://vk.com/id" + str(user_id))
-    bs = BeautifulSoup(request.text, "lxml")
-    user_name = bs.find("title").text
-    return user_name.split()[0] + " " + user_name.split()[1]
-
-
 class VkBot:
     def __init__(self):
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
                           "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд", "!сайт",
-                          "!флуд точно"]
+                          "!флуд точно", "!save state"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -28,7 +21,9 @@ class VkBot:
         day = parsed_text.find("p", id="day").text
         self._prev_day = day
         self._flood = {}
+        self._id_to_name = {}
         self._flood_amount = collections.Counter()
+        self._load_state()
 
     @staticmethod
     def _get_time():
@@ -44,6 +39,14 @@ class VkBot:
         parsed_text = BeautifulSoup(request.text, 'lxml')
         day = parsed_text.find("p", id="day").text
         return day
+
+    def _get_name(self, user_id):
+        if self._id_to_name.get(user_id) is None:
+            request = requests.get("https://vk.com/id" + str(user_id))
+            bs = BeautifulSoup(request.text, "lxml")
+            user_name = bs.find("title").text
+            self._id_to_name[user_id] = user_name.split()[0] + " " + user_name.split()[1]
+        return self._id_to_name[user_id]
 
     def _get_info(self):
         if self._itmo_schedule.find("strong").text == 'нечетная':
@@ -152,9 +155,8 @@ class VkBot:
 
     @staticmethod
     def _update():
-        return "Update 5:\n1) Новая команда: !сайт\n2) У команды !флуд изменен функционал. Теперь показывается" \
-               "только процент флуда (для отображения количества сообщений теперь другая команда - !флуд точно)\n3) " \
-               "Новая команда: !флуд точно\n4) Команды !флуд и !флуд точно больше не учитывают сообщения с командами"
+        return "Update 6:\n1) Ускорена работа команд !флуд и !флуд точно\n2) Теперь бот сохраняет активность " \
+               "участников после даже после обновления "
     
     @staticmethod
     def _update_all():
@@ -163,13 +165,47 @@ class VkBot:
     def _participation(self, chat_id, message):
         output = ""
         for key, value in self._flood[chat_id].get_all().items():
-            output += get_name(key) + ": "
+            output += self._get_name(key) + ": "
             if message == self._commands[12]:
                 output += str(value) + '\n'
             output += progress(value, self._flood_amount[chat_id]) + '\n'
         if output == "":
             return "Пока всё тихо..."
         return output
+
+    def _save_state(self):
+        file = open('flood.txt', 'w')
+        for key, value in self._flood.items():
+            file.write('index: ' + str(key) + ' ' + str(self._flood_amount[key]) + '\n')
+            for key_2, value_2 in self._flood[key].get_all().items():
+                file.write(str(key_2) + ' ' + str(value_2) + '\n')
+        file.close()
+        file = open('id_to_name.txt', 'w')
+        for key, value in self._id_to_name.items():
+            file.write(str(key) + " " + value + '\n')
+        file.close()
+
+    def _load_state(self):
+        file = open('flood.txt', 'r')
+        temp_chat = ''
+        for line in file:
+            if line == '':
+                continue
+            if line.split()[0] == 'index:':
+                temp_chat = line.split()[1]
+                self._flood[temp_chat] = Chat()
+                self._flood_amount[temp_chat] = int(line.split()[2])
+                continue
+            temp_user = line.split()[0]
+            for _ in range(0, int(line.split()[1])):
+                self._flood[temp_chat].plus(temp_user)
+        file.close()
+        file = open('id_to_name.txt', 'r')
+        for line in file:
+            if line == '':
+                continue
+            self._id_to_name[line.split()[0]] = line.split()[1] + " " + line.split()[2]
+        file.close()
 
     def new_message(self, message, user_id, chat_id):
         switch_time = {
@@ -205,6 +241,9 @@ class VkBot:
             return self._participation(chat_id, message.lower())
         if message.lower() == self._commands[11]:
             return "usachova.gitbook.io"
+        if message.lower() == self._commands[13]:
+            self._save_state()
+            return "Saved"
         if self._flood.get(chat_id) is None:
             self._flood[chat_id] = Chat()
         self._flood[chat_id].plus(user_id)
