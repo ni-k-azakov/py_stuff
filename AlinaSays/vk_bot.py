@@ -13,7 +13,7 @@ class VkBot:
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
                           "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд", "!сайт",
-                          "!флуд точно", "!save state"]
+                          "!флуд точно", "!save state", "!дедлайны"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -145,18 +145,39 @@ class VkBot:
             return table
         return "В этот день отдыхаю. Сидр попиваю. Тейлор снимаю"
 
+    def _deadlines(self):
+        request = requests.get('https://usachova.gitbook.io/m3206/')
+        parsed_text = BeautifulSoup(request.text, 'html5lib')
+        table = parsed_text.find("tbody")
+        week = []
+        deadlines = []
+        for row in table.find_all("tr"):
+            parsed_row = row.find_all("td")
+            day = row.find("p").text
+            if day == "день недели":
+                continue
+            week.append(parsed_row[0].find("p").text)
+            deadline = parsed_row[1].find("p").text.replace('\u200b', "")
+            deadlines.append(deadline)
+        output = "---Дедлайны недели---\n"
+        for i in range(0, 6):
+            if not deadlines[i]:
+                continue
+            week[i] = week[i][0].upper() + week[i][1:]
+            output += week[i] + ": " + deadlines[i] + '\n'
+        return output
+
     @staticmethod
     def _command_info():
         return "Список команд:\n1) !алина: ближайшая пара на сегодня\n2) !алина сегодня: расписание на сегодня\n3) " \
                "!алина завтра: расписание на завтра\n4) !обновление: новости о последнем обновлении\n5) !обновление " \
                "все: список всех последних обновлений\n6) !флуд: активность участников беседы в процентах\n7) !сайт: " \
                "ссылочка на Машин сайт со всей инфой по парам\n8) !флуд точно: активность участников беседы (" \
-               "количество сообщений + проценты) "
+               "количество сообщений + проценты)\n 9) !дедлайны: дедлайны этой недели"
 
     @staticmethod
     def _update():
-        return "Update 6:\n1) Ускорена работа команд !флуд и !флуд точно\n2) Теперь бот сохраняет активность " \
-               "участников даже после обновления "
+        return "Update 7:\n1) Новая команда: !дедлайны"
     
     @staticmethod
     def _update_all():
@@ -244,6 +265,8 @@ class VkBot:
         if message.lower() == self._commands[13]:
             self._save_state()
             return "Saved"
+        if message.lower() == self._commands[14]:
+            return self._deadlines()
         if self._flood.get(chat_id) is None:
             self._flood[chat_id] = Chat()
         self._flood[chat_id].plus(user_id)
