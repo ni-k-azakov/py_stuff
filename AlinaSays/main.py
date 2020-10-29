@@ -26,3 +26,5 @@ while True:
                                      random_id=random.randint(0, 2048))
     except requests.exceptions.ReadTimeout as timeout:
         continue
+    except requests.exceptions.ConnectionError as timeout:
+        continue
