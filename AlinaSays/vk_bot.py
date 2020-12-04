@@ -160,7 +160,7 @@ class VkBot:
             deadline = parsed_row[1].find("p").text.replace('\u200b', "")
             deadlines.append(deadline)
         output = "---Дедлайны недели---\n"
-        for i in range(0, 6):
+        for i in range(0, len(deadlines)):
             if not deadlines[i]:
                 continue
             week[i] = week[i][0].upper() + week[i][1:]
