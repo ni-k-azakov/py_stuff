@@ -3,8 +3,8 @@ import requests
 from datetime import datetime
 import pytz
 import collections
+import random
 from progress_bar import progress
-from settings import update_list
 from Chat import Chat
 
 
@@ -13,7 +13,7 @@ class VkBot:
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
                           "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд", "!сайт",
-                          "!флуд точно", "!save state", "!дедлайны"]
+                          "!флуд точно", "!save state", "!дедлайны", "!анекдот"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -173,15 +173,33 @@ class VkBot:
                "!алина завтра: расписание на завтра\n4) !обновление: новости о последнем обновлении\n5) !обновление " \
                "все: список всех последних обновлений\n6) !флуд: активность участников беседы в процентах\n7) !сайт: " \
                "ссылочка на Машин сайт со всей инфой по парам\n8) !флуд точно: активность участников беседы (" \
-               "количество сообщений + проценты)\n 9) !дедлайны: дедлайны этой недели"
+               "количество сообщений + проценты)\n9) !дедлайны: дедлайны этой недели \n10) !анекдот: случайный" \
+               " анекдот уровня Б"
 
     @staticmethod
     def _update():
-        return "Update 7:\n1) Новая команда: !дедлайны"
+        return "Update 8:\n1) Новая команда: !анекдот\n2) Микро фиксы"
     
     @staticmethod
     def _update_all():
-        return update_list
+        return "Update 1:\n1) Команда `алина говорит` изменена на !алина\n2) Новая команда: !алина сегодня\n3) Новая " \
+              "команда: !алина завтра\n4) Новая команда: !команды\n----\nUpdate 2:\n1) Пиво было заменено на сидр\n" \
+              "2) Новая команда: !обновление все\n----\nUpdate 3:\n1) Sunday bug fix\n----\nUpdate 4:\n" \
+              "1) Новая команда: !флуд \n----\nUpdate 5:\n1) Новая команда: !сайт\n2) У команды !флуд изменен " \
+              "функционал. Теперь показывается только процент флуда (для отображения количества сообщений теперь " \
+              "другая команда - !флуд точно)\n3) Новая команда: !флуд точно\n4) Команды !флуд и !флуд точно больше " \
+              "не учитывают сообщения с командами\n----\nUpdate 6:\n1) Ускорена работа команд !флуд и !флуд точно\n" \
+              "2) Теперь бот сохраняет активность участников даже после обновления\n---\nUpdate 7:\n" \
+              "1) Новая команда: !дедлайны\n---\nUpdate 8:\n1) Новая команда: !анекдот\n2) Микро фиксы"
+
+    @staticmethod
+    def joke():
+        joke_id = int(random.random() * 1142)
+        request = requests.get('https://baneks.ru/' + str(joke_id))
+        request.encoding = 'utf8'
+        parsed_text = BeautifulSoup(request.text, 'html5lib')
+        joke = parsed_text.find("article").find("p").text
+        return joke
 
     def _participation(self, chat_id, message):
         output = ""
@@ -253,20 +271,27 @@ class VkBot:
         if message.lower() == self._commands[4] or message.lower() == self._commands[6]:
             return self._update()
         if message.lower() == self._commands[5] or message.lower() == self._commands[7]:
+            self._save_state()
             return "Спасибо за понимание"
         if message == self._commands[8]:
+            self._save_state()
             return "зАхАрЕвИч!"
         if message.lower() == self._commands[9]:
             return self._update_all()
         if message.lower() == self._commands[10] or message.lower() == self._commands[12]:
+            self._save_state()
             return self._participation(chat_id, message.lower())
         if message.lower() == self._commands[11]:
+            self._save_state()
             return "usachova.gitbook.io"
         if message.lower() == self._commands[13]:
             self._save_state()
             return "Saved"
         if message.lower() == self._commands[14]:
+            self._save_state()
             return self._deadlines()
+        if message.lower() == self._commands[15]:
+            return self.joke()
         if self._flood.get(chat_id) is None:
             self._flood[chat_id] = Chat()
         self._flood[chat_id].plus(user_id)
