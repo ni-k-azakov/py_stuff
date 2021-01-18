@@ -181,7 +181,7 @@ class VkBot:
 
     @staticmethod
     def _update():
-        return "Update 10:\n1) в список команд добавлены команды бота Махи\n"
+        return "Update 10:\n1) Новая команда: !ссылки"
     
     @staticmethod
     def _update_all():
