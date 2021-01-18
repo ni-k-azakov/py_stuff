@@ -13,3 +13,6 @@ class Chat:
 
     def get_all(self):
         return self._flood
+
+    def sort(self):
+        self._flood.most_common()

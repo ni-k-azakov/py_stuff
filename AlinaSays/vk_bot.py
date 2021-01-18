@@ -207,6 +207,7 @@ class VkBot:
 
     def _participation(self, chat_id, message):
         output = ""
+        self._flood[chat_id].sort()
         for key, value in self._flood[chat_id].get_all().items():
             output += self._get_name(key) + ": "
             if message == self._commands[12]:
