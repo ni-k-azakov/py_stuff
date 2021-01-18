@@ -13,7 +13,7 @@ class VkBot:
         print("Alina was born")
         self._commands = ["!алина", "!алина завтра", "!алина сегодня", "!команды", "!обновление", "понимаю",
                           "!обновления", "панимаю", "ЗаХаРеВиЧ", "!обновление все", "!флуд", "!сайт",
-                          "!флуд точно", "!save state", "!дедлайны", "!анекдот"]
+                          "!флуд точно", "!save state", "!дедлайны", "!анекдот", "!ссылки"]
         request = requests.get('https://itmo.ru/ru/schedule/0/M3206/raspisanie_zanyatiy_M3206.htm')
         self._itmo_schedule = BeautifulSoup(request.text, 'lxml')
         request = requests.get("http://www.xn--80aajbde2dgyi4m.xn--p1ai/")
@@ -296,6 +296,8 @@ class VkBot:
             return self._deadlines()
         if message.lower() == self._commands[15]:
             return self.joke()
+        if message.lower() == self._commands[16]:
+            return "usachova.gitbook.io - сайтик\nbars.itmo.ru - БаРС\nisu.ifmo.ru - ИСУ\nde.ifmo.ru - ЦДО"
         if self._flood.get(chat_id) is None:
             self._flood[chat_id] = Chat()
         self._flood[chat_id].plus(user_id)
