@@ -12,7 +12,6 @@ class Chat:
         return self._flood[user_id]
 
     def get_all(self):
-        return self._flood
+        return self._flood.most_common()
 
-    def sort(self):
-        self._flood.most_common()
+
